@@ -4,9 +4,7 @@
 % face-vs-car category model. Neural RDM = 1 - Pearson r between the 80
 % condition patterns; model RDM = 0 within category, 1 between. Inference:
 % one-sample t-test of subject rho vs 0 with Benjamini-Hochberg FDR.
-%
-% Caution: shows representational alignment, not causal category coding, and
-% does not separate category from low-level visual differences.
+
 
 project_root = fileparts(fileparts(mfilename('fullpath')));
 load(fullfile(project_root, 'pipeline_setup.mat'));
@@ -171,4 +169,4 @@ save(fullfile(results_dir, 'rsa_results.mat'), ...
     'rho_ts_all', 't_centres', 'grand_rho', 'sem_rho', 'win_ms', 'step_ms', ...
     'sig_fdr', 'p_ts', 'pcrit_ts', 'group_rdm', 'rho_group', 'p_group');
 
-fprintf('\nRSA complete. Next: code/step6_summary.m\n');
+fprintf('\nRSA complete. Next: code/step6_decoding.py\n');
