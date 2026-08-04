@@ -1,8 +1,7 @@
 %% step3_erp.m - ERP grand averages and N170 face-vs-car statistics.
 %
 % Subject and grand-average ERPs for faces and cars; paired t-test on mean N170
-% amplitude (140-200 ms, P7/P8/PO7/PO8). Negative-up convention is used for
-% plotting only; saved amplitudes keep their original sign.
+% amplitude (140-200 ms, P7/P8/PO7/PO8). 
 
 project_root = fileparts(fileparts(mfilename('fullpath')));
 load(fullfile(project_root, 'pipeline_setup.mat'));
@@ -47,10 +46,22 @@ for s = 1:n_subjects
     clean_filename = sprintf('%s_clean.set', subject_id);
     EEG = pop_loadset('filename', clean_filename, 'filepath', proc_dir);
 
+    % Dimension check against the template.
+    if EEG.nbchan ~= n_channels || EEG.pnts ~= n_times
+        error(['Subject %s has %d channels x %d samples, expected %d x %d. ' ...
+               'Check the interpolation step in step2_preprocess.m.'], ...
+               subject_id, EEG.nbchan, EEG.pnts, n_channels, n_times);
+    end
+
     epoch_codes = get_epoch_codes(EEG);
     face_trials = ismember(epoch_codes, FACE_CODES);
     car_trials = ismember(epoch_codes, CAR_CODES);
     trial_counts(s,:) = [sum(face_trials), sum(car_trials)];
+    if trial_counts(s,1) == 0 || trial_counts(s,2) == 0
+        error(['Subject %s has %d face and %d car trials after rejection. ' ...
+               'A condition with no trials produces NaN averages.'], ...
+               subject_id, trial_counts(s,1), trial_counts(s,2));
+    end
 
     erps_face(s,:,:) = mean(EEG.data(:,:,face_trials), 3);
     erps_car(s,:,:) = mean(EEG.data(:,:,car_trials), 3);
@@ -64,8 +75,7 @@ grand_face = squeeze(mean(erps_face, 1));
 grand_car = squeeze(mean(erps_car, 1));
 grand_diff = grand_face - grand_car;
 
-% EEGLAB datasets are sometimes stored in volts and sometimes already in uV.
-% Use a conservative display scale; saved raw amplitudes remain unchanged.
+% Auto-detect volts vs microvolts for display.
 if max(abs(grand_face(:))) < 1e-3
     erp_scale = 1e6;
 else
