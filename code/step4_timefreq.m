@@ -1,8 +1,7 @@
 %% step4_timefreq.m - Morlet time-frequency analysis (4-40 Hz), face vs car.
 %
 % Requires FieldTrip. Per subject: wavelet power (5 cycles), dB baseline
-% correction (-200..0 ms), extracted at PO8 (fallback P8). Output: Figure 4
-% (Faces, Cars, Face-Car difference).
+% correction (-200..0 ms), extracted at PO8 (fallback P8).
 
 project_root = fileparts(fileparts(mfilename('fullpath')));
 load(fullfile(project_root, 'pipeline_setup.mat'));
@@ -13,7 +12,7 @@ load(fullfile(proc_dir, 'event_code_mapping.mat'));
 eeglab;
 close;
 if isempty(which('ft_defaults'))
-    error('FieldTrip is not available. Set fieldtrip_path in config.m or skip step4_timefreq.m.');
+    error('FieldTrip is not on the MATLAB path. Run step0_setup.m first.');
 end
 ft_defaults;
 
