@@ -1,7 +1,4 @@
-%% step0_setup.m - Configure paths, load toolboxes, verify inputs. Run first.
-%
-% Machine-specific paths live in config.m (git-ignored). On a new machine,
-% copy config_template.m to config.m and edit toolbox/data paths.
+%% step0_setup.m - Configure paths, load toolboxes, verify inputs.
 
 clear; clc;
 
@@ -11,8 +8,6 @@ functions_dir = fullfile(project_root, 'functions');
 addpath(functions_dir);
 
 %% Default configuration
-% These defaults make the repository self-contained. Users can override any of
-% them in config.m without editing public analysis scripts.
 raw_dir     = fullfile(project_root, 'raw_data');
 proc_dir    = fullfile(project_root, 'processed');
 results_dir = fullfile(project_root, 'results');
@@ -23,12 +18,12 @@ subjects = {'1', '2', '3', '4', '5', '6'};
 filename_pattern = '%s_N170.set';
 
 %% Load local configuration if available
-config_file = fullfile(project_root, 'config.m');
+config_file = fullfile(project_root, 'code', 'config.m');
 if exist(config_file, 'file') == 2
     run(config_file);
 else
     fprintf('No config.m found. Using default relative folders.\n');
-    fprintf('For local toolbox/data paths, copy config_template.m to config.m.\n');
+    fprintf('For local toolbox/data paths, copy code/config_template.m to code/config.m.\n');
 end
 
 %% Create output folders
@@ -55,8 +50,7 @@ end
 eeglab;
 close;
 
-% step2_preprocess.m requires these plugins. We warn here so users can fix the
-% environment before a long preprocessing run starts.
+% step2_preprocess.m requires these plugins.
 missing_plugins = {};
 if isempty(which('iclabel'))
     missing_plugins{end+1} = 'ICLabel'; %#ok<SAGROW>
@@ -70,24 +64,22 @@ if ~isempty(missing_plugins)
              strjoin(missing_plugins, ', '));
 end
 
-%% FieldTrip setup, optional for time-frequency analysis only
-fieldtrip_available = false;
+%% FieldTrip setup
 if ~isempty(fieldtrip_path)
-    if exist(fieldtrip_path, 'dir') == 7
-        addpath(fieldtrip_path);
-        ft_defaults;
-        fieldtrip_available = true;
-    else
-        warning('fieldtrip_path does not exist: %s', fieldtrip_path);
+    if exist(fieldtrip_path, 'dir') ~= 7
+        error('fieldtrip_path does not exist: %s', fieldtrip_path);
     end
-elseif ~isempty(which('ft_defaults'))
-    ft_defaults;
-    fieldtrip_available = true;
+    addpath(fieldtrip_path);
 end
 
-if ~fieldtrip_available
-    warning('FieldTrip not found. step4_timefreq.m will be skipped by run_all.m.');
+if isempty(which('ft_defaults'))
+    error(['FieldTrip is not on the MATLAB path. Set fieldtrip_path in ' ...
+           'code/config.m, or add FieldTrip to the MATLAB path before ' ...
+           'running the pipeline. Download it from https://www.fieldtriptoolbox.org.']);
 end
+
+% ft_defaults adds FieldTrip's subfolders.
+ft_defaults;
 
 %% Verify raw subject files
 n_subjects = numel(subjects);
@@ -115,6 +107,6 @@ end
 save(fullfile(project_root, 'pipeline_setup.mat'), ...
     'project_root', 'functions_dir', 'raw_dir', 'proc_dir', 'results_dir', ...
     'subjects', 'filename_pattern', 'n_subjects', ...
-    'eeglab_path', 'fieldtrip_path', 'fieldtrip_available');
+    'eeglab_path', 'fieldtrip_path');
 
 fprintf('\nSetup complete. Next: code/step1_discover.m\n');
