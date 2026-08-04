@@ -1,8 +1,8 @@
 # EEG N170 ERP/RSA Pipeline
 
-MATLAB-based EEG analysis pipeline for N170 ERP analysis and representational similarity analysis (RSA).
+MATLAB and Python EEG analysis pipeline for N170 ERP analysis, representational similarity analysis, and multivariate decoding.
 
-The pipeline includes dataset discovery, preprocessing, ERP analysis, time-frequency analysis, RSA, and summary reporting. 
+The pipeline covers dataset discovery, preprocessing, ERP analysis, time-frequency analysis, RSA, decoding, and summary reporting.
 
 ## Dataset
 
@@ -15,7 +15,7 @@ The present pipeline uses the **N170 face-perception task**, in which participan
 - scrambled faces;
 - scrambled cars.
 
-The main ERP contrast in this repository focuses on **faces vs. cars** in the N170 time window. The RSA analysis compares EEG dissimilarity structure with a simple face/car category model.
+The main ERP contrast in this repository focuses on **faces vs. cars** in the N170 time window. The RSA analysis compares EEG dissimilarity structure with a simple face/car category model. The decoding analysis classifies single face and car trials at each time point.
 
 Raw EEG data are not redistributed in this repository. Please download the dataset from the official ERP CORE/OSF source and follow the original data-use terms.
 
@@ -30,13 +30,22 @@ LICENSE      Repository license
 
 ## Requirements
 
+MATLAB steps:
+
 - MATLAB
 - EEGLAB
-- EEGLAB ICLabel plugin
-- EEGLAB clean_rawdata plugin
-- FieldTrip, required only for the optional time-frequency analysis
+- FieldTrip
 
 The required MATLAB toolboxes should be installed separately and added to the MATLAB path before running the pipeline.
+
+Python decoding step:
+
+- Python 3.10 or later
+- MNE-Python, scikit-learn, SciPy, NumPy, Matplotlib
+
+```bash
+pip install -r requirements.txt
+```
 
 ## Setup
 
@@ -54,6 +63,8 @@ code/config.m
 
 Then edit `config.m` to define the local paths for the raw data, processed data, results folder, EEGLAB, and FieldTrip.
 
+The Python decoding step locates its folders from the repository structure and needs no configuration.
+
 ## Running the Pipeline
 
 Run the scripts in order from the `code/` folder:
@@ -65,26 +76,25 @@ step2_preprocess
 step3_erp
 step4_timefreq
 step5_rsa
-step6_summary
 ```
 
-## Outputs
+Then from the shell:
 
-The pipeline generates ERP plots, scalp topographies, time-frequency results, RSA figures, and a summary of key analysis outputs.
+```bash
+python code/step6_decoding.py
+```
 
-## Data and Reproducibility
+Then back in MATLAB:
 
-Raw EEG data, processed EEG files, and generated MATLAB result files should not be committed to GitHub. The repository is intended to store analysis code, documentation, and lightweight example figures only.
+```matlab
+step7_summary
+```
 
 ## Citation
 
 If using the ERP CORE dataset, cite the original ERP CORE paper:
 
 Kappenman, E. S., Farrens, J. L., Zhang, W., Stewart, A. X., & Luck, S. J. (2021). *ERP CORE: An open resource for human event-related potential research*. NeuroImage, 225, 117465. https://doi.org/10.1016/j.neuroimage.2020.117465
-
-## Notes
-
-This code is intended for reproducible EEG research analysis. Results should be interpreted with attention to sample size, preprocessing choices, statistical correction, and dataset-specific assumptions.
 
 ## License
 
