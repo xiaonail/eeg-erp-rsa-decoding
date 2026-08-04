@@ -1,7 +1,4 @@
 %% step1_discover.m - Inspect one subject's event codes, channels, sampling rate.
-%
-% Check the printed event codes and map them at the top of step2 before
-% preprocessing.
 
 project_root = fileparts(fileparts(mfilename('fullpath')));
 load(fullfile(project_root, 'pipeline_setup.mat'));
@@ -39,8 +36,7 @@ if isempty(EEG.event)
 else
     event_types = {EEG.event.type};
 
-    % Convert all event labels to strings for robust counting across numeric
-    % and character event-code formats.
+    % Normalise to strings for counting across numeric and char formats.
     event_labels = cell(size(event_types));
     for i = 1:numel(event_types)
         if isnumeric(event_types{i})
@@ -60,5 +56,4 @@ else
     end
 end
 
-fprintf('\nNext action: verify these codes, then check the mapping in step2_preprocess.m.\n');
-
+fprintf('\nDiscovery complete. Next: code/step2_preprocess.m\n');
