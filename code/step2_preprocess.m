@@ -4,9 +4,7 @@
 % clean_rawdata bad-channel removal, average reference, ICA (fit on a 1 Hz copy)
 % with ICLabel eye/muscle rejection at p>=0.80, interpolate, epoch, baseline,
 % and reject epochs exceeding +/-150 uV.
-%
-% Note: a transparent tutorial pipeline, not the only defensible one. For a
-% paper, report every parameter below and justify any change.
+
 
 project_root = fileparts(fileparts(mfilename('fullpath')));
 load(fullfile(project_root, 'pipeline_setup.mat'));
@@ -23,7 +21,6 @@ if isempty(which('pop_clean_rawdata')) && isempty(which('clean_rawdata'))
 end
 
 %% Event-code mapping
-% Confirm these values with step1_discover.m and the ERP CORE documentation.
 FACE_CODES     = 1:40;
 CAR_CODES      = 41:80;
 SCRAMBLED_FACE = 101:140;
@@ -66,17 +63,16 @@ for s = 1:n_subjects
     EEG = eeg_checkset(EEG);
     EEG.setname = subject_id;
 
-    % Add standard channel positions if the EEGLAB lookup file is available.
+    % Standard channel positions.
     lookup_file = fullfile(fileparts(which('eeglab')), ...
         'plugins', 'dipfit', 'standard_BEM', 'elec', 'standard_1005.elc');
     if exist(lookup_file, 'file') == 2
         EEG = pop_chanedit(EEG, 'lookup', lookup_file);
     else
-        warning('Standard channel-location file not found. Continuing with existing channel locations.');
+        warning('Standard channel-location file not found; using existing locations.');
     end
 
-    % Remove obvious non-EEG/status channels. Use any(contains(...)) because
-    % contains(label, cell_array) returns one logical value per token.
+    % Remove non-EEG/status channels.
     remove_channels = {};
     for ch = 1:EEG.nbchan
         label_upper = upper(EEG.chanlocs(ch).labels);
@@ -90,11 +86,10 @@ for s = 1:n_subjects
 
     original_chanlocs = EEG.chanlocs;
 
-    % Continuous filtering before channel rejection and ICA.
+    % Band-pass filter.
     EEG = pop_eegfiltnew(EEG, 'locutoff', hp_freq, 'hicutoff', lp_freq);
 
-    % Bad-channel detection only; burst/window cleaning is disabled to keep the
-    % tutorial pipeline simple and easy to audit.
+    % Bad-channel detection; burst/window cleaning disabled.
     EEG = pop_clean_rawdata(EEG, ...
         'FlatlineCriterion', 5, ...
         'ChannelCriterion', 0.8, ...
@@ -112,9 +107,7 @@ for s = 1:n_subjects
 
     EEG = pop_reref(EEG, []);
 
-    % Fit ICA on a 1 Hz copy and transfer decomposition back to ERP-preserving
-    % 0.1 Hz data. This is for improving ICA quality without
-    % imposing the 1 Hz high-pass on ERP analyses.
+    % ICA on a 1 Hz copy; transfer weights back to the 0.1 Hz data.
     EEG_ica = pop_eegfiltnew(EEG, 'locutoff', ica_hp_freq);
     EEG_ica = pop_runica(EEG_ica, 'icatype', 'runica', 'extended', 1);
     EEG.icaweights = EEG_ica.icaweights;
@@ -136,9 +129,22 @@ for s = 1:n_subjects
     EEG = pop_interp(EEG, original_chanlocs, 'spherical');
     EEG = pop_reref(EEG, []);
 
-    % Epoch using string event labels, which is robust for EEGLAB datasets whose
-    % event types are stored as character codes.
-    EEG = pop_epoch(EEG, ALL_STIM_CODES_STR, epoch_win);
+    % Match event-type format: char or numeric, whichever this file uses.
+    if isnumeric(EEG.event(1).type)
+        epoch_selector = num2cell(ALL_STIM_CODES);
+        n_matching = sum(ismember([EEG.event.type], ALL_STIM_CODES));
+    else
+        epoch_selector = ALL_STIM_CODES_STR;
+        n_matching = sum(ismember({EEG.event.type}, ALL_STIM_CODES_STR));
+    end
+
+    if n_matching == 0
+        error(['No events matched ALL_STIM_CODES for subject %s. Run ' ...
+               'step1_discover.m and correct the code mapping at the top ' ...
+               'of this script.'], subject_id);
+    end
+
+    EEG = pop_epoch(EEG, epoch_selector, epoch_win);
     n_epochs_before_rejection = EEG.trials;
     EEG = pop_rmbase(EEG, baseline_ms);
     EEG = pop_eegthresh(EEG, 1, 1:EEG.nbchan, ...
@@ -149,7 +155,13 @@ for s = 1:n_subjects
     fprintf(fid, '  Epochs retained: %d / %d (%.1f%%)\n\n', EEG.trials, n_epochs_before_rejection, retention_percent);
 
     EEG.setname = sprintf('%s_clean', subject_id);
-    pop_saveset(EEG, 'filename', sprintf('%s_clean.set', subject_id), 'filepath', proc_dir);
+    clean_name = sprintf('%s_clean.set', subject_id);
+    pop_saveset(EEG, 'filename', clean_name, 'filepath', proc_dir);
+
+    % Rewrite as v7 so scipy/MNE can read the .set header.
+    clean_path = fullfile(proc_dir, clean_name);
+    S = load('-mat', clean_path);
+    save(clean_path, '-struct', 'S', '-v7');
 end
 
 save(fullfile(proc_dir, 'event_code_mapping.mat'), ...
