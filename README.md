@@ -1,4 +1,4 @@
-# EEG N170 ERP/RSA Pipeline
+# EEG N170 ERP RSA decoding Pipeline
 
 MATLAB and Python EEG analysis pipeline for N170 ERP analysis, representational similarity analysis, and multivariate decoding.
 
