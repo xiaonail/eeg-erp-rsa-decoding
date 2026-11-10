@@ -219,7 +219,7 @@ def main():
         "n_folds": N_FOLDS, "c_param": C_PARAM, "sfreq_decode": SFREQ_DECODE,
     })
 
-    print(f"\nDecoding complete. Next: code/step7_summary.m")
+    print(f"\nDecoding complete. Next: code/step7_specparam.py")
 
 
 if __name__ == "__main__":
