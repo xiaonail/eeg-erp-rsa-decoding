@@ -32,24 +32,6 @@ Python decoding and spectral parameterisation steps:
 - Python 3.10 or later
 - MNE-Python, scikit-learn, SciPy, NumPy, Matplotlib, FOOOF
 
-## Setup
-
-Copy the configuration template:
-
-```text
-code/config_template.m
-```
-
-Rename it to:
-
-```text
-code/config.m
-```
-
-Then edit `config.m` to define the local paths for the raw data, processed data, results folder, EEGLAB, and FieldTrip.
-
-The Python steps locate their folders from the repository structure and need no configuration.
-
 ## Running the Pipeline
 
 Run the scripts in order from the `code/` folder:
